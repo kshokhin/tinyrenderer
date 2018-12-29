@@ -32,15 +32,14 @@ void sk::renderer::draw(const sk::line& l, const TGAColor& c)
 
 void sk::renderer::draw_line_impl(const sk::line& l, bool steep, const TGAColor& c)
 {
-    auto point = sk::point(l.start().x, l.start().y);
+    auto point = l.start();
     auto err = 0;
 
     while(point.x != l.end().x)
     {
-        l.steep() ? m_image.set(point.y, point.x, c) :
-            m_image.set(point.x, point.y, c);
+        l.steep() ? m_image.set(point.y, point.x, c) : m_image.set(point.x, point.y, c);
 
-    point = get_next_line_point(l, point, err);
+        point = get_next_line_point(l, point, err);
     }
 }
 
@@ -82,50 +81,16 @@ void sk::renderer::draw_filled_triangle(
         const sk::vec3f& v2,
         const TGAColor& c)
 {
-    auto v0_copy = v0;
-    auto v1_copy = v1;
-    auto v2_copy = v2;
+    sk::triangle t(from_ndc(v0), from_ndc(v1), from_ndc(v2));
 
-    sort_left_to_right(v0_copy, v1_copy, v2_copy);
-    
-    std::cout << "v0: " << v0_copy[0] << "," << v0_copy[1] << "," << v0_copy[2] << "\n"; 
-    std::cout << "v1: " << v1_copy[0] << "," << v1_copy[1] << "," << v1_copy[2] << "\n"; 
-    std::cout << "v2: " << v2_copy[0] << "," << v2_copy[1] << "," << v2_copy[2] << "\n"; 
+    sk::bounding_box bb(t);
 
-    int x0 = (v0_copy[0] + 1.) * m_image.get_width() / 2.;
-    int y0 = (v0_copy[1] + 1.) * m_image.get_height() / 2.;
-    int x1 = (v1_copy[0] + 1.) * m_image.get_width() / 2.;
-    int y1 = (v1_copy[1] + 1.) * m_image.get_height() / 2.;
-    int x2 = (v2_copy[0] + 1.) * m_image.get_width() / 2.;
-    int y2 = (v2_copy[1] + 1.) * m_image.get_height() / 2.;
-
-    auto line1 = sk::line(x0, y0, x1, y1);
-    auto line2 = sk::line(x0, y0, x2, y2);
-    auto line3 = sk::line(x1, y1, x2, y2);
-
-    //draw(line1, c);
-    //draw(line2, c);
-    //draw(line3, c);
-    //draw_filled_triangle(line1, line2, line3);
-    auto point1 = line1.start(), point2 = line2.start();
-
-    int err1 = 0, err2 = 0;
-    while (point1.x != line1.end().x && point2.x != line2.end().x)
+    for (const auto& p : bb)
     {
-        auto x1 = line1.steep() ? point1.y : point1.x;
-        auto x2 = line2.steep() ? point2.y : point2.x;
-        auto y1 = line1.steep() ? point1.x : point1.y;
-        auto y2 = line2.steep() ? point2.x : point2.y;
+        if (!t.contains(p)) continue;
 
-        draw_line(x1, y1, x2, y2, c);
-        point1 = get_next_line_point(line1, point1, err1);
-        point2 = get_next_line_point(line2, point2, err2);
+        m_image.set(p.x, p.y, c);
     }
-}
-
-void sk::renderer::draw_filled_triangle(const sk::line& border1, const sk::line& border2, const sk::line& border3)
-{
-
 }
 
 void sk::renderer::sort_left_to_right(sk::vec3f& v0, sk::vec3f& v1, sk::vec3f& v2)
@@ -146,6 +111,15 @@ void sk::renderer::sort_left_to_right(sk::vec3f& v0, sk::vec3f& v1, sk::vec3f& v
     }
 }
 
+sk::vec3i sk::renderer::from_ndc(const sk::vec3f& v)
+{
+    sk::vec3i res;
+    res[0] = (v[0] + 1.) * m_image.get_width() / 2.;
+    res[1] = (v[1] + 1.) * m_image.get_height() / 2.;
+
+    return res;
+}
+
 sk::point sk::renderer::get_next_line_point(const sk::line& l, const point& prev_point, int& err)
 {
     if (prev_point.x == l.end().x) return prev_point;
@@ -161,4 +135,21 @@ sk::point sk::renderer::get_next_line_point(const sk::line& l, const point& prev
     }
 
     return sk::point(x,y);
+}
+
+sk::point sk::renderer::get_prev_line_point(const sk::line& l, const point& prev_point, int& err)
+{
+    if (prev_point.x == l.start().x) return prev_point;
+
+    auto x = prev_point.x - 1;
+    auto y = prev_point.y;
+
+    err += l.derr();
+    if (err >= l.dx())
+    {
+        y -= l.dy() > 0 ? 1 : -1;
+        err -= 2 * l.dx();
+    }
+
+    return sk::point(x, y);
 }
