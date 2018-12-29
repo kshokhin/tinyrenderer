@@ -66,12 +66,12 @@ void sk::renderer::draw_triangle(
 
 void sk::renderer::draw_line(const sk::vec3f& v0, const sk::vec3f& v1)
 {
-    TGAColor white(255, 255, 255, 255);
+    TGAColor red(255, 0, 0, 255);
     int x0 = (v0[0] + 1.) * m_image.get_width() / 2.;
     int y0 = (v0[1] + 1.) * m_image.get_height() / 2.;
     int x1 = (v1[0] + 1.) * m_image.get_width() / 2.;
     int y1 = (v1[1] + 1.) * m_image.get_height() / 2.;
-    draw_line(x0, y0, x1, y1, white); 
+    draw_line(x0, y0, x1, y1, red); 
 }
 
 
@@ -81,6 +81,8 @@ void sk::renderer::draw_filled_triangle(
         const sk::vec3f& v2,
         const TGAColor& c)
 {
+    if (v0[1] == v1[1] && v0[1] == v2[1] || v0[0] == v1[0] && v0[0] == v2[0]) return;
+
     sk::triangle t(from_ndc(v0), from_ndc(v1), from_ndc(v2));
 
     sk::bounding_box bb(t);
@@ -91,6 +93,8 @@ void sk::renderer::draw_filled_triangle(
 
         m_image.set(p.x, p.y, c);
     }
+
+    //draw_triangle(v0, v1, v2);
 }
 
 void sk::renderer::sort_left_to_right(sk::vec3f& v0, sk::vec3f& v1, sk::vec3f& v2)

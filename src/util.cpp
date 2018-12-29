@@ -39,6 +39,15 @@ bool triangle::contains(const point& p)
 {
     vec3f barycentric_coords = barycentric(p);
 
+    if (p.x == 400)
+    {
+        std::cout << "point : (" << p.x << ", " << p.y << ")\n";
+        std::cout << barycentric_coords[0] << " " << barycentric_coords[1] << " " << barycentric_coords[2] << "\n";
+        std::cout << "v0 : " << v0[0] << " " << v0[1] << "\n";
+        std::cout << "v1 : " << v1[0] << " " << v1[1] << "\n";
+        std::cout << "v2 : " << v2[0] << " " << v2[1] << "\n";
+    }
+
     return barycentric_coords[0] >= 0 && barycentric_coords[1] >= 0 && barycentric_coords[2] >= 0;
 }
 
@@ -56,6 +65,7 @@ vec3f triangle::barycentric(const point& p)
     u[0] = (d11 * d20 - d01 * d21) / denom;
     u[1] = (d00 * d21 - d01 * d20) / denom;
     u[2] = 1.0f - u[0] - u[1];
+
 
     return u;
 }
@@ -107,8 +117,6 @@ bounding_box::bounding_box(const triangle& t)
 
     m_max[0] = std::max(t.v0[0], std::max(t.v1[0], t.v2[0]));
     m_max[1] = std::max(t.v0[1], std::max(t.v1[1], t.v2[1]));
-
-    std::cout << "bounding box : (" << m_min[0] << ", " << m_min[1] << ")x(" << m_max[0] << ", " << m_max[1] << ")\n";
 }
 
 bounding_box::bounding_box_iterator bounding_box::begin()
