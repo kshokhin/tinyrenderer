@@ -1,20 +1,22 @@
 #include"renderer.h"
 #include"mesh.h"
 
+#include<utility>
+
 sk::renderer::renderer(TGAImage& target) : m_image(target) {}
 
 sk::renderer::~renderer()
 {
-	m_image.flip_vertically();
-	m_image.write_tga_file("output.tga");
+    m_image.flip_vertically();
+    m_image.write_tga_file("output.tga");
 }
 
 void sk::renderer::draw(const sk::point& p, const TGAColor& c)
 {
-	if (p.x < 0 || p.x > m_image.get_width()) return;
-	if (p.y < 0 || p.y > m_image.get_height()) return;
+    if (p.x < 0 || p.x > m_image.get_width()) return;
+    if (p.y < 0 || p.y > m_image.get_height()) return;
 
-	m_image.set(p.x, p.y, c);
+    m_image.set(p.x, p.y, c);
 }
 
 void sk::renderer::draw_line(int x0,int y0,int x1,int y1, const TGAColor& c)
@@ -36,9 +38,9 @@ void sk::renderer::draw_line_impl(const sk::line& l, bool steep, const TGAColor&
     while(point.x != l.end().x)
     {
         l.steep() ? m_image.set(point.y, point.x, c) :
-		    m_image.set(point.x, point.y, c);
+            m_image.set(point.x, point.y, c);
 
-	point = get_next_line_point(l, point, err);
+    point = get_next_line_point(l, point, err);
     }
 }
 
@@ -46,17 +48,17 @@ void sk::renderer::draw(const model& m)
 {
     for (const auto& f : m.faces)
     {
-	const auto& v0 = m.verts[f[0]];
-	const auto& v1 = m.verts[f[1]];
-	const auto& v2 = m.verts[f[2]];
+    const auto& v0 = m.verts[f[0]];
+    const auto& v1 = m.verts[f[1]];
+    const auto& v2 = m.verts[f[2]];
         draw_triangle(v0, v1, v2);
     }
 }
 
 void sk::renderer::draw_triangle(
-		const sk::vec3f& v0,
-		const sk::vec3f& v1,
-		const sk::vec3f& v2)
+        const sk::vec3f& v0,
+        const sk::vec3f& v1,
+        const sk::vec3f& v2)
 {
     draw_line(v0, v1);
     draw_line(v1, v2);
@@ -75,10 +77,10 @@ void sk::renderer::draw_line(const sk::vec3f& v0, const sk::vec3f& v1)
 
 
 void sk::renderer::draw_filled_triangle(
-		const sk::vec3f& v0,
-		const sk::vec3f& v1,
-		const sk::vec3f& v2,
-		const TGAColor& c)
+        const sk::vec3f& v0,
+        const sk::vec3f& v1,
+        const sk::vec3f& v2,
+        const TGAColor& c)
 {
     auto v0_copy = v0;
     auto v1_copy = v1;
@@ -104,7 +106,7 @@ void sk::renderer::draw_filled_triangle(
     //draw(line1, c);
     //draw(line2, c);
     //draw(line3, c);
-    draw_filled_triangle(line1, line2, line3);
+    //draw_filled_triangle(line1, line2, line3);
     auto point1 = line1.start(), point2 = line2.start();
 
     int err1 = 0, err2 = 0;
@@ -115,27 +117,32 @@ void sk::renderer::draw_filled_triangle(
         auto y1 = line1.steep() ? point1.x : point1.y;
         auto y2 = line2.steep() ? point2.x : point2.y;
 
-	draw_line(x1, y1, x2, y2, c);
-	point1 = get_next_line_point(line1, point1, err1);
-	point2 = get_next_line_point(line2, point2, err2);
+        draw_line(x1, y1, x2, y2, c);
+        point1 = get_next_line_point(line1, point1, err1);
+        point2 = get_next_line_point(line2, point2, err2);
     }
+}
+
+void sk::renderer::draw_filled_triangle(const sk::line& border1, const sk::line& border2, const sk::line& border3)
+{
+
 }
 
 void sk::renderer::sort_left_to_right(sk::vec3f& v0, sk::vec3f& v1, sk::vec3f& v2)
 {
     if (v0[0] > v1[0])
     {
-	std::swap(v0, v1);
+        std::swap(v0, v1);
     }
 
     if (v0[0] > v2[0])
     {
-	std::swap(v0, v2);
+        std::swap(v0, v2);
     }
     
     if (v1[0] > v2[0])
     {
-	std::swap(v1, v2);
+        std::swap(v1, v2);
     }
 }
 

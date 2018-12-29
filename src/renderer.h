@@ -35,7 +35,7 @@ private:
     void draw_line_impl(const sk::line&, bool /*steep*/, const TGAColor&);
     sk::point get_next_line_point(const sk::line&, const point& /*prev_point*/, int& /*err*/);
     void sort_left_to_right(sk::vec3f& /*v0*/, sk::vec3f& /*v1*/, sk::vec3f& /*v2*/);
-    void draw_filled_triangle(const sk:line& /*border1*/, const sk::line& /*border2*/, const sk::line& /*border3*/);
+	void draw_filled_triangle(const sk::line& /*border1*/, const sk::line& /*border2*/, const sk::line& /*border3*/);
 private:
     TGAImage& m_image;
 };
