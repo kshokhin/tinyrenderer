@@ -1,2 +1,5 @@
 build/*
+Release/*
+Debug/*
+.vs/*
 *.o
