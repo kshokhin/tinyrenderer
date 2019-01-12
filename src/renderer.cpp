@@ -93,8 +93,6 @@ void sk::renderer::draw_filled_triangle(
 
         m_image.set(p.x, p.y, c);
     }
-
-    //draw_triangle(v0, v1, v2);
 }
 
 void sk::renderer::sort_left_to_right(sk::vec3f& v0, sk::vec3f& v1, sk::vec3f& v2)
