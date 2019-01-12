@@ -3,6 +3,8 @@
 #include<cstdlib>
 #include<utility>
 
+#include"tgalib/tgaimage.h"
+
 using namespace sk;
 
 line::line(int x0, int y0, int x1, int y1) : m_start(x0, y0), m_end(x1, y1)
@@ -39,30 +41,30 @@ bool triangle::contains(const point& p)
 {
     vec3f barycentric_coords = barycentric(p);
 
+//    std::cout << barycentric_coords[0] << " " << barycentric_coords[1] << " " << barycentric_coords[2] << "\n";
+
     return barycentric_coords[0] >= 0 && barycentric_coords[1] >= 0 && barycentric_coords[2] >= 0;
 }
 
-vec3f triangle::barycentric(const point& p)
+vec3f triangle::barycentric(const point& p) const
 {
-    vec3f vec0(v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]), vec1(v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]), vec2(p.x - v0[0], p.y - v0[1], 0);
-    float d00 = dot(vec0, vec0);
-    float d01 = dot(vec0, vec1);
-    float d11 = dot(vec1, vec1);
-    float d20 = dot(vec2, vec0);
-    float d21 = dot(vec2, vec1);
-    float denom = d00 * d11 - d01 * d01;
+    vec3f s0, s1;
+    s0[0] = v2[0] - v0[0];
+    s0[1] = v1[0] - v0[0];
+    s0[2] = v0[0] - p.x;
 
-    vec3f u;
-    u[0] = (d11 * d20 - d01 * d21) / denom;
-    u[1] = (d00 * d21 - d01 * d20) / denom;
-    u[2] = 1.0f - u[0] - u[1];
+    s1[0] = v2[1] - v0[1];
+    s1[1] = v1[1] - v0[1];
+    s1[2] = v0[1] - p.y;
 
-    if (u[0] > -0.0000001) u[0] = 0;
-    if (u[1] > -0.0000001) u[1] = 0;
-    if (u[2] > -0.0000001) u[2] = 0;
+    std::cout << v0 << v1 << v2 << p.x << " " << p.y << "\n";
 
+    vec3f u = cross(s0, s1);
 
-    return u;
+    if (std::abs(u[2]) > 1e-2) // dont forget that u[2] is integer. If it is zero then triangle ABC is degenerate
+        return vec3f(1.f - (u[0] + u[1]) / u[2], u[1] / u[2], u[0] / u[2]);
+    return vec3f(-1, 1, 1);
+
 }
 
 bounding_box::bounding_box_iterator::bounding_box_iterator(const bounding_box& bb, bool end_reached) : m_owner(bb), m_end_reached(end_reached)
@@ -105,13 +107,16 @@ const bounding_box::bounding_box_const_iterator& bounding_box::bounding_box_cons
     return *this;
 }
 
-bounding_box::bounding_box(const triangle& t)
+bounding_box::bounding_box(const triangle& t, const TGAImage& i)
 {
     m_min[0] = std::min(t.v0[0], std::min(t.v1[0], t.v2[0]));
     m_min[1] = std::min(t.v0[1], std::min(t.v1[1], t.v2[1]));
 
     m_max[0] = std::max(t.v0[0], std::max(t.v1[0], t.v2[0]));
     m_max[1] = std::max(t.v0[1], std::max(t.v1[1], t.v2[1]));
+
+    m_max[0] = std::min(i.get_width() - 1, m_max[0]);
+    m_max[1] = std::min(i.get_height() - 1, m_max[1]);
 }
 
 bounding_box::bounding_box_iterator bounding_box::begin()
@@ -141,18 +146,18 @@ point bounding_box::first_point() const
 
 point bounding_box::next_point(const point& prev_point) const
 {
-    auto x = prev_point.x + 1;
-    auto y = prev_point.y;
+    auto x = prev_point.x;
+    auto y = prev_point.y + 1;
 
-    //if x is out of bounds switch to next row
-    if (x > m_max[0])
+    //if y is out of bounds switch to next row
+    if (y > m_max[1])
     {
-        x = m_min[0];
-        y++;
+        y = m_min[1];
+        x++;
     }
 
-    //if y is out of bounds return to prev point
-    if (y > m_max[1])
+    //if x is out of bounds return to prev point
+    if (x > m_max[0])
     {
         x = m_max[0];
         y = m_max[1];

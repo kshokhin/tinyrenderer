@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <vector>
 
 #include"tgalib/tgaimage.h"
 #include"util.h"
@@ -33,9 +34,12 @@ public:
     void draw_filled_triangle(const sk::vec3f& /*v0*/, const sk::vec3f& /*v1*/, const sk::vec3f& /*v2*/, const TGAColor&); 
 private:
     sk::point get_next_line_point(const sk::line&, const point& /*prev_point*/, int& /*err*/);
-    sk::vec3i from_ndc(const sk::vec3f& /*v*/);
+    sk::vec3f from_ndc(const sk::vec3f& /*v*/);
+    bool check_z_buffer(const sk::point&);
+    float calc_z_coordinate(const sk::point&, const sk::triangle&);
 private:
     TGAImage& m_image;
+    std::vector<float> m_z_buffer;
 };
 
 }

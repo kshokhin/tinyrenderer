@@ -1,9 +1,10 @@
-#include"renderer.h"
-#include"mesh.h"
+#include "renderer.h"
+#include "mesh.h"
 
-#include<utility>
+#include <utility>
+#include <limits>
 
-sk::renderer::renderer(TGAImage& target) : m_image(target) {}
+sk::renderer::renderer(TGAImage& target) : m_image(target), m_z_buffer(m_image.get_height() * m_image.get_width(), -std::numeric_limits<float>::max()) {}
 
 sk::renderer::~renderer()
 {
@@ -77,21 +78,40 @@ void sk::renderer::draw_filled_triangle(
 
     sk::triangle t(from_ndc(v0), from_ndc(v1), from_ndc(v2));
 
-    sk::bounding_box bb(t);
+    sk::bounding_box bb(t, m_image);
 
-    for (const auto& p : bb)
+    for (auto p : bb)
     {
-        if (!t.contains(p)) continue;
+        auto barycentric = t.barycentric(p);
+
+        if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0) continue;
+
+        p.z = t.v0[2] * barycentric[0] + t.v1[2] * barycentric[1] + t.v2[2] * barycentric[2];
+
+        if (!check_z_buffer(p)) continue;
+
+        m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
 
         m_image.set(p.x, p.y, c);
     }
 }
 
-sk::vec3i sk::renderer::from_ndc(const sk::vec3f& v)
+bool sk::renderer::check_z_buffer(const sk::point& p)
 {
-    sk::vec3i res;
-    res[0] = (v[0] + 1.) * m_image.get_width() / 2.;
-    res[1] = (v[1] + 1.) * m_image.get_height() / 2.;
+    return m_z_buffer[p.y*m_image.get_width() + p.x] < p.z;
+}
+
+float sk::renderer::calc_z_coordinate(const sk::point& p, const sk::triangle& t)
+{
+    return 0;
+}
+
+sk::vec3f sk::renderer::from_ndc(const sk::vec3f& v)
+{
+    sk::vec3f res;
+    res[0] = static_cast<int>((v[0] + 1.) * m_image.get_width() / 2. + 0.5f);
+    res[1] = static_cast<int>((v[1] + 1.) * m_image.get_height() / 2. + 0.5f);
+    res[2] = v[2];
 
     return res;
 }

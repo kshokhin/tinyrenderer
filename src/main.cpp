@@ -23,10 +23,10 @@ int main(int argc, char** argv) {
         sk::vec3f n = cross((v2 - v0), (v1 - v0));
         n.norm();
         float intensity = dot(n, light_dir);
-        if (intensity > 0)
-        {
-            r.draw_filled_triangle(v0, v1, v2, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
-        }
+//        if (intensity > 0)
+//        {
+        r.draw_filled_triangle(v0, v1, v2, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
+//        }
     }
 
     return 0;

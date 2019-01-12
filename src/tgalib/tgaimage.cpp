@@ -267,11 +267,11 @@ int TGAImage::get_bytespp() {
 	return bytespp;
 }
 
-int TGAImage::get_width() {
+int TGAImage::get_width() const {
 	return width;
 }
 
-int TGAImage::get_height() {
+int TGAImage::get_height() const {
 	return height;
 }
 
