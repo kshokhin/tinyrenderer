@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry.h"
+#include "tgalib/tgaimage.h"
 
 
 class TGAImage;
@@ -111,5 +112,12 @@ public:
 private:
     vec3i m_min;
     vec3i m_max;
+};
+
+struct vertex
+{
+    vec3f pos;
+    vec2f tex;
+    TGAColor color;
 };
 }

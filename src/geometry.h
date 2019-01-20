@@ -96,5 +96,6 @@ std::ostream& operator<<(std::ostream& out, const vec_impl<T, indexes...>& v)
 }
 
 using vec3f = vec_impl<float, 0, 1, 2>;
+using vec2f = vec_impl<float, 0, 1>;
 using vec3i = vec_impl<int, 0, 1, 2>;
 }

@@ -57,11 +57,11 @@ vec3f triangle::barycentric(const point& p) const
     s1[1] = v1[1] - v0[1];
     s1[2] = v0[1] - p.y;
 
-    std::cout << v0 << v1 << v2 << p.x << " " << p.y << "\n";
+    //std::cout << v0 << v1 << v2 << p.x << " " << p.y << "\n";
 
     vec3f u = cross(s0, s1);
 
-    if (std::abs(u[2]) > 1e-2) // dont forget that u[2] is integer. If it is zero then triangle ABC is degenerate
+    if (std::abs(u[2]) > 1e-2) //u[2] is integer. If it is zero then triangle ABC is degenerate
         return vec3f(1.f - (u[0] + u[1]) / u[2], u[1] / u[2], u[0] / u[2]);
     return vec3f(-1, 1, 1);
 
