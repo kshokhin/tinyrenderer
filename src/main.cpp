@@ -12,23 +12,19 @@ const TGAColor blue = TGAColor(0, 0, 255, 255);
 
 int main(int argc, char** argv) {
     TGAImage image(WIDTH, HEIGHT, TGAImage::RGB);
-    model m("african_head.obj");
+    model m("african_head.obj", "african_head_diffuse.tga");
     sk::renderer r(image);
 
     sk::vec3f light_dir(0, 0, -1);
 
     for (auto& face : m.faces) {
         sk::vertex v0, v1, v2;
-        v0.pos = m.verts[face[0]];
-        v0.color = white;
 
-        v1.pos = m.verts[face[1]];
-        v1.color = white;
+        v0 = m.get_vertex(face, 0);
+        v1 = m.get_vertex(face, 1);
+        v2 = m.get_vertex(face, 2);
 
-        v2.pos = m.verts[face[2]];
-        v2.color = white;
-
-        r.draw_filled_triangle(v0, v1, v2);
+        r.draw_filled_triangle(v0, v1, v2, m.texture.get());
     }
 
     

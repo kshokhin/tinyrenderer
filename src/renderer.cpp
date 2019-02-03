@@ -43,9 +43,9 @@ void sk::renderer::draw_wireframe(const model& m, const TGAColor& c)
 {
     for (const auto& f : m.faces)
     {
-        const auto& v0 = m.verts[f[0]];
-        const auto& v1 = m.verts[f[1]];
-        const auto& v2 = m.verts[f[2]];
+        const auto& v0 = m.verts[f.vert_ids[0]];
+        const auto& v1 = m.verts[f.vert_ids[1]];
+        const auto& v2 = m.verts[f.vert_ids[2]];
         draw_triangle(v0, v1, v2, c);
     }
 }
@@ -107,6 +107,8 @@ void sk::renderer::draw_filled_triangle(
         {
             c = get_point_color_from_texture(barycentric, v0.tex, v1.tex, v2.tex, *texture);
         }
+
+        if (intensity < 0) continue;
 
         m_image.set(p.x, p.y, TGAColor(c.r*intensity, c.g * intensity, c.b*intensity, c.a));
     }
