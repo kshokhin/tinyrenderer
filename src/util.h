@@ -1,13 +1,17 @@
 #pragma once
 
 #include "geometry.h"
+#include "tgalib/tgaimage.h"
+
+
+class TGAImage;
 
 namespace sk
 {
 struct point
 {
     point() = default;
-    point(int _x, int _y) : x(_x), y(_y) {}
+    point(int _x, int _y, float _z = 0.f) : x(_x), y(_y), z(_z) {}
     
     bool operator==(const point& rhs) const
     {
@@ -16,6 +20,7 @@ struct point
     
     int x = 0;
     int y = 0;
+    float z = 0.f;
 };
 
 
@@ -48,15 +53,15 @@ class triangle
 {
 public:
     triangle() = default;
-    triangle(const sk::vec3i& _v0, const sk::vec3i& _v1, const sk::vec3i& _v2) : v0(_v0), v1(_v1), v2(_v2) {};
+    triangle(const sk::vec3f& _v0, const sk::vec3f& _v1, const sk::vec3f& _v2) : v0(_v0), v1(_v1), v2(_v2) {};
 
     bool contains(const point&);
+    vec3f barycentric(const point&) const;
 
-    vec3i v0;
-    vec3i v1;
-    vec3i v2;
-private:
-    vec3f barycentric(const point&);
+    vec3f v0;
+    vec3f v1;
+    vec3f v2;
+
 };
 
 class bounding_box
@@ -93,7 +98,7 @@ public:
     };
 
 
-    explicit bounding_box(const triangle&);
+    explicit bounding_box(const triangle&, const TGAImage&);
 
     bounding_box_iterator begin();
     bounding_box_iterator end();
@@ -107,5 +112,12 @@ public:
 private:
     vec3i m_min;
     vec3i m_max;
+};
+
+struct vertex
+{
+    vec3f pos;
+    vec2f tex;
+    TGAColor color;
 };
 }

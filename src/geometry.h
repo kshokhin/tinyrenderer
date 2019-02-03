@@ -79,9 +79,23 @@ constexpr vec_impl<T, 0, 1, 2> cross(const vec_impl<T, 0, 1, 2>& lhs, const vec_
     res[1] = lhs[2]*rhs[0] - lhs[0]*rhs[2];
     res[2] = lhs[0]*rhs[1] - lhs[1]*rhs[0];
 
+//    std::cout << lhs << rhs << res;
+
     return res;
 }
 
+template<typename T, size_t ...indexes>
+std::ostream& operator<<(std::ostream& out, const vec_impl<T, indexes...>& v)
+{
+    for (size_t i = 0; i < sizeof...(indexes); ++i)
+    {
+        out << v[i] << " ";
+    }
+    out << "\n";
+    return out;
+}
+
 using vec3f = vec_impl<float, 0, 1, 2>;
+using vec2f = vec_impl<float, 0, 1>;
 using vec3i = vec_impl<int, 0, 1, 2>;
 }
