@@ -76,25 +76,50 @@ void sk::renderer::draw_filled_triangle(
 {
     if (v0.pos[1] == v1.pos[1] && v0.pos[1] == v2.pos[1] || v0.pos[0] == v1.pos[0] && v0.pos[0] == v2.pos[0]) return;
 
-    sk::vec3f n = cross((v2.pos - v0.pos), (v1.pos - v0.pos))*(-1);
-    sk::vec3f light_dir(-1, -1, -1);//world space coords
-    light_dir.norm();
-    n.norm();
-    float intensity = dot(n, light_dir);
-    if (intensity > 0) {
-        intensity = 0;
-    } else {
-        intensity *= -1;
-    }
+    auto intensity = triangle_intensity(v0, v1, v2);
+    if (intensity < 0) return;
 
     auto v0_transformed = transform_vertex(v0.pos);
     auto v1_transformed = transform_vertex(v1.pos);
     auto v2_transformed = transform_vertex(v2.pos);
 
-    float angle = dot(n, m_view);
-    if (angle > 0) return;
     sk::triangle t(from_ndc(v0_transformed), from_ndc(v1_transformed), from_ndc(v2_transformed));
+    if (texture != nullptr)
+    {
+        t.set_texture(*texture, v0.tex, v1.tex, v2.tex);
+    }
+    else
+    {
+        t.set_color(v0.color, v1.color, v2.color);
+    }
 
+    draw(t, intensity);
+}
+
+//negative intensity means that triangle is not supposed to be rendered
+float sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
+{
+    sk::vec3f n = cross((v1.pos - v0.pos), (v2.pos - v0.pos));
+    sk::vec3f light_dir(-1, -1, -1);//world space coords
+    light_dir.norm();
+    n.norm();
+
+    float angle = dot(n, m_view);
+    if (angle > 0) return -1.f;
+
+    float intensity = dot(n, light_dir);
+    if (intensity > 0) {
+        intensity = 0;
+    }
+    else {
+        intensity *= -1;
+    }
+
+    return intensity;
+}
+
+void sk::renderer::draw(sk::triangle& t, float intensity)
+{
     sk::bounding_box bb(t, m_image);
 
     for (auto p : bb)
@@ -111,13 +136,13 @@ void sk::renderer::draw_filled_triangle(
 
         TGAColor c;
 
-        if (texture == nullptr)
+        if (t.texture == nullptr)
         {
-            c = get_point_color_from_vertices(barycentric, v0.color, v1.color, v2.color);
+            c = get_point_color_from_vertices(barycentric, t.v0_col, t.v1_col, t.v2_col);
         }
         else
         {
-            c = get_point_color_from_texture(barycentric, v0.tex, v1.tex, v2.tex, *texture);
+            c = get_point_color_from_texture(barycentric, t.v0_tex, t.v1_tex, t.v2_tex, *t.texture);
         }
 
         m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;

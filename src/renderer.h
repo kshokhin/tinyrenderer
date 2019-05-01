@@ -41,12 +41,13 @@ private:
     sk::point get_next_line_point(const sk::line&, const point& /*prev_point*/, int& /*err*/);
     sk::vec3f from_ndc(const sk::vec3f& /*v*/);
     bool check_z_buffer(const sk::point&);
-    float calc_z_coordinate(const sk::point&, const sk::triangle&);
     TGAColor get_point_color_from_vertices(const sk::vec3f& /*barycentric*/,
         const TGAColor& /*v0_color*/, const TGAColor& /*v1_color*/, const TGAColor& /*v2_color*/);
     TGAColor get_point_color_from_texture(const sk::vec3f& /*barycentric*/, const sk::vec2f& /*v0_tex_coord*/, const sk::vec2f& /*v1_tex_coord*/, const sk::vec2f& /*v2_tex_coord*/, const TGAImage& texture);
     sk::vec3f transform_vertex(const sk::vec3f&);
     void init_transformation_pipeline();
+    void draw(sk::triangle& t, float intensity);
+    float triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
 private:
     TGAImage& m_image;
     std::vector<float> m_z_buffer;

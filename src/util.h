@@ -57,11 +57,35 @@ public:
 
     bool contains(const point&);
     vec3f barycentric(const point&) const;
+    void set_texture(const TGAImage& _texture, const sk::vec2f& _v0_tex,
+        const sk::vec2f& _v1_tex, const sk::vec2f& _v2_tex)
+    {
+        v0_tex = _v0_tex;
+        v1_tex = _v1_tex;
+        v2_tex = _v2_tex;
+        texture = &_texture;
+    }
+
+    void set_color(const TGAColor& _v0_col, const TGAColor& _v1_col, const TGAColor& _v2_col)
+    {
+        v0_col = _v0_col;
+        v1_col = _v1_col;
+        v2_col = _v2_col;
+    }
 
     vec3f v0;
     vec3f v1;
     vec3f v2;
 
+    TGAColor v0_col;
+    TGAColor v1_col;
+    TGAColor v2_col;
+
+    vec2f v0_tex;
+    vec2f v1_tex;
+    vec2f v2_tex;
+
+    const TGAImage* texture = nullptr;
 };
 
 class bounding_box

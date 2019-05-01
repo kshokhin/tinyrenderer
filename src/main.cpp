@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     model m("african_head.obj", "african_head_diffuse.tga");
     sk::renderer r(image);
 
-    r.look_at(sk::vec3f{ 0.f, 0.f, 4.f }, sk::vec3f{ 0.f, 0.f, 0.f }, sk::vec3f{0.f, -1.f, 0.f});
+    r.look_at(sk::vec3f{ 2.f, 2.f, 4.f }, sk::vec3f{ 0.f, 0.f, 0.f }, sk::vec3f{0.f, -1.f, 0.f});
     r.set_fov(M_PI/3);
 
     for (auto& face : m.faces) {
@@ -30,8 +30,6 @@ int main(int argc, char** argv) {
 
         r.draw_filled_triangle(v0, v1, v2, m.texture.get());
     }
-
-    
 
     /*v0.pos = sk::vec3f(0.f, 0.5f, 0);
     v0.color = green;
