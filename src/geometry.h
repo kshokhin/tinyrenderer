@@ -32,8 +32,10 @@ template<typename T, size_t N, size_t M>
 class matrix
 {
 public:
+    using value_type = T;
+
     matrix() : m_data{ 0 } {};
-    explicit matrix(T *data)
+    explicit matrix(const T *data)
     {
         for (size_t i = 0; i < N; ++i)
         {
@@ -50,6 +52,9 @@ public:
         if (data.size() > N*M) throw std::bad_alloc();
         memcpy(m_data.data(), data.data(), N*M);
     }
+
+    constexpr static size_t row_cnt = N;
+    constexpr static size_t column_cnt = M;
 
     matrix_line_proxy<T, M> operator[](size_t idx)
     {
@@ -140,6 +145,19 @@ std::ostream& operator<<(std::ostream& out, const matrix<T, N, M>& m)
     return out;
 }
 
+template<typename T, size_t N>
+matrix<T, N, N> identity_matrix()
+{
+    matrix<T, N, N> m;
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        m[i][i] = 1;
+    }
+
+    return m;
+}
+
 template<typename T, size_t ...indexes>
 class vec_impl
 {
@@ -148,15 +166,28 @@ public:
     constexpr vec_impl(const vec_impl& rhs) { ((m_data[indexes] = rhs.m_data[indexes]), ...); }
     template <typename...Ts>
     constexpr vec_impl(Ts ...vals) { static_assert(sizeof...(vals) == sizeof...(indexes)); ((m_data[indexes] = vals), ...); }
+    constexpr vec_impl(const matrix<T, sizeof...(indexes), 1>& m)
+    {
+        ((m_data[indexes] = m[indexes][0]), ...);
+    }
 
     constexpr T& operator[](size_t i) { return m_data[i]; }
     constexpr const T& operator[](size_t i) const { return m_data[i]; }
     constexpr T len() const { return std::sqrt(dot(*this, *this)); }
     constexpr void norm() { auto l = len(); ((m_data[indexes] /= l), ...); };
+    constexpr vec_impl& operator=(const matrix<T, sizeof...(indexes), 1>& m)
+    {
+        ((m_data[indexes] = m[indexes][0]), ...);
+    }
 
-    constexpr operator matrix<T, sizeof...(indexes), 1>()
+    constexpr matrix<T, sizeof...(indexes), 1> as_matrix_col() const
     {
         return matrix<T, sizeof...(indexes), 1>(m_data.data());
+    }
+
+    constexpr matrix<T, 1, sizeof...(indexes)> as_matrix_row() const
+    {
+        return matrix<T, 1, sizeof...(indexes)>(m_data.data());
     }
 private:
     std::array<T, sizeof...(indexes)> m_data;
