@@ -76,7 +76,10 @@ void sk::renderer::draw_filled_triangle(
 {
     if (v0.pos[1] == v1.pos[1] && v0.pos[1] == v2.pos[1] || v0.pos[0] == v1.pos[0] && v0.pos[0] == v2.pos[0]) return;
 
-    sk::triangle t(from_ndc(v0.pos), from_ndc(v1.pos), from_ndc(v2.pos));
+    auto v0_transformed = transform_vertex(v0.pos);
+    auto v1_transformed = transform_vertex(v1.pos);
+    auto v2_transformed = transform_vertex(v2.pos);
+    sk::triangle t(from_ndc(v0_transformed), from_ndc(v1_transformed), from_ndc(v2_transformed));
 
     sk::bounding_box bb(t, m_image);
 
@@ -114,6 +117,29 @@ void sk::renderer::draw_filled_triangle(
     }
 }
 
+void sk::renderer::set_camera_pos(float z)
+{
+    m_camera_pos[2] = z;
+}
+
+sk::vec3f sk::renderer::transform_vertex(const sk::vec3f& pos)
+{
+    sk::vec3f res;
+
+    res[0] = std::min(1.f, std::max(-1.f, pos[0] / (1 - pos[2] / m_camera_pos[2])));
+    res[1] = std::min(1.f, std::max(-1.f, pos[1] / (1 - pos[2] / m_camera_pos[2])));
+    res[2] = std::min(1.f, std::max(-1.f, pos[2] / (1 - pos[2] / m_camera_pos[2])));
+
+    if (res[0] > 1 || res[1] > 1 || res[2] > 1 ||
+        res[0] < -1 || res[1] < -1 || res[2] < -1)
+    {
+        std::cout << pos << "\n";
+        std::cout << res << "\n";
+    }
+
+    return res;
+}
+
 bool sk::renderer::check_z_buffer(const sk::point& p)
 {
     return m_z_buffer[p.y*m_image.get_width() + p.x] < p.z;
@@ -147,6 +173,12 @@ sk::vec3f sk::renderer::from_ndc(const sk::vec3f& v)
     res[0] = static_cast<int>((v[0] + 1.) * m_image.get_width() / 2. + 0.5f);
     res[1] = static_cast<int>((v[1] + 1.) * m_image.get_height() / 2. + 0.5f);
     res[2] = v[2];
+
+    if (res[0] < 0 || res[1] < 0)
+    {
+        std::cout << v << "\n";
+        std::cout << res << "\n";
+    }
 
     return res;
 }
