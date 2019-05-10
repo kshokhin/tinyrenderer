@@ -32,20 +32,29 @@ public:
     void draw_line(const sk::vec3f& /*v0*/, const sk::vec3f& /*v1*/, const TGAColor&);
     void draw_triangle(const sk::vec3f& /*v0*/, const sk::vec3f& /*v1*/, const sk::vec3f& /*v2*/, const TGAColor&);
     void draw_filled_triangle(const sk::vertex& /*v0*/, const sk::vertex& /*v1*/, const sk::vertex& /*v2*/, TGAImage* /*texture*/ = nullptr); 
-    void set_camera_pos(float z);
+    void look_at(const sk::vec3f& eye, const sk::vec3f& center, const sk::vec3f& up);
+    void set_world_matrix(const matrix4x4f& m);
+    void set_view_matrix(const matrix4x4f& m);
+    void set_projection_matrix(const matrix4x4f& m);
+    void set_fov(float fov_rads);
 private:
     sk::point get_next_line_point(const sk::line&, const point& /*prev_point*/, int& /*err*/);
     sk::vec3f from_ndc(const sk::vec3f& /*v*/);
     bool check_z_buffer(const sk::point&);
-    float calc_z_coordinate(const sk::point&, const sk::triangle&);
     TGAColor get_point_color_from_vertices(const sk::vec3f& /*barycentric*/,
         const TGAColor& /*v0_color*/, const TGAColor& /*v1_color*/, const TGAColor& /*v2_color*/);
     TGAColor get_point_color_from_texture(const sk::vec3f& /*barycentric*/, const sk::vec2f& /*v0_tex_coord*/, const sk::vec2f& /*v1_tex_coord*/, const sk::vec2f& /*v2_tex_coord*/, const TGAImage& texture);
     sk::vec3f transform_vertex(const sk::vec3f&);
+    void init_transformation_pipeline();
+    void draw(sk::triangle& t, float intensity);
+    float triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
 private:
     TGAImage& m_image;
     std::vector<float> m_z_buffer;
-    sk::vec3f m_camera_pos;
+    sk::vec3f m_view;
+    sk::matrix4x4f m_world_matrix;
+    sk::matrix4x4f m_view_matrix;
+    sk::matrix4x4f m_projection_matrix;
 };
 
 }

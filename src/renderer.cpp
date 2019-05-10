@@ -4,7 +4,7 @@
 #include <utility>
 #include <limits>
 
-sk::renderer::renderer(TGAImage& target) : m_image(target), m_z_buffer(m_image.get_height() * m_image.get_width(), -std::numeric_limits<float>::max()) {}
+sk::renderer::renderer(TGAImage& target) : m_image(target), m_z_buffer(m_image.get_height() * m_image.get_width(), -std::numeric_limits<float>::max()) { init_transformation_pipeline(); }
 
 sk::renderer::~renderer()
 {
@@ -76,15 +76,56 @@ void sk::renderer::draw_filled_triangle(
 {
     if (v0.pos[1] == v1.pos[1] && v0.pos[1] == v2.pos[1] || v0.pos[0] == v1.pos[0] && v0.pos[0] == v2.pos[0]) return;
 
+    auto intensity = triangle_intensity(v0, v1, v2);
+    if (intensity < 0) return;
+
     auto v0_transformed = transform_vertex(v0.pos);
     auto v1_transformed = transform_vertex(v1.pos);
     auto v2_transformed = transform_vertex(v2.pos);
-    sk::triangle t(from_ndc(v0_transformed), from_ndc(v1_transformed), from_ndc(v2_transformed));
 
+    sk::triangle t(from_ndc(v0_transformed), from_ndc(v1_transformed), from_ndc(v2_transformed));
+    if (texture != nullptr)
+    {
+        t.set_texture(*texture, v0.tex, v1.tex, v2.tex);
+    }
+    else
+    {
+        t.set_color(v0.color, v1.color, v2.color);
+    }
+
+    draw(t, intensity);
+}
+
+//negative intensity means that triangle is not supposed to be rendered
+float sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
+{
+    sk::vec3f n = cross((v1.pos - v0.pos), (v2.pos - v0.pos));
+    sk::vec3f light_dir(-1, -1, -1);//world space coords
+    light_dir.norm();
+    n.norm();
+
+    float angle = dot(n, m_view);
+    if (angle > 0) return -1.f;
+
+    float intensity = dot(n, light_dir);
+    if (intensity > 0) {
+        intensity = 0;
+    }
+    else {
+        intensity *= -1;
+    }
+
+    return intensity;
+}
+
+void sk::renderer::draw(sk::triangle& t, float intensity)
+{
     sk::bounding_box bb(t, m_image);
 
     for (auto p : bb)
     {
+        if (p.x < 0 || p.x > m_image.get_width() ||
+            p.y < 0 || p.y > m_image.get_height()) continue;
         auto barycentric = t.barycentric(p);
 
         if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0) continue;
@@ -93,51 +134,119 @@ void sk::renderer::draw_filled_triangle(
 
         if (!check_z_buffer(p)) continue;
 
-        m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
-
-        sk::vec3f n = cross((v2.pos - v0.pos), (v1.pos - v0.pos));
-        sk::vec3f light_dir(0, 0, -1);
-        n.norm();
-        float intensity = dot(n, light_dir);
-
         TGAColor c;
 
-        if (texture == nullptr)
+        if (t.texture == nullptr)
         {
-            c = get_point_color_from_vertices(barycentric, v0.color, v1.color, v2.color);
+            c = get_point_color_from_vertices(barycentric, t.v0_col, t.v1_col, t.v2_col);
         }
         else
         {
-            c = get_point_color_from_texture(barycentric, v0.tex, v1.tex, v2.tex, *texture);
+            c = get_point_color_from_texture(barycentric, t.v0_tex, t.v1_tex, t.v2_tex, *t.texture);
         }
 
-        if (intensity < 0) continue;
+        m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
 
         m_image.set(p.x, p.y, TGAColor(c.r*intensity, c.g * intensity, c.b*intensity, c.a));
     }
 }
 
-void sk::renderer::set_camera_pos(float z)
+void sk::renderer::look_at(const sk::vec3f& eye, const sk::vec3f& center, const sk::vec3f& up)
 {
-    m_camera_pos[2] = z;
+    auto camera_look = eye - center;
+    camera_look.norm();
+    m_view = center - eye;
+    std::cout << m_view << "\n";
+    auto camera_right = sk::cross(up, camera_look);
+    camera_right.norm();
+    auto camera_up = sk::cross(camera_look, camera_right);
+    camera_up.norm();
+
+    m_view_matrix[0][0] = camera_right[0];
+    m_view_matrix[1][0] = camera_right[1];
+    m_view_matrix[2][0] = camera_right[2];
+
+    m_view_matrix[0][1] = camera_up[0];
+    m_view_matrix[1][1] = camera_up[1];
+    m_view_matrix[2][1] = camera_up[2];
+
+    m_view_matrix[0][2] = camera_look[0];
+    m_view_matrix[1][2] = camera_look[1];
+    m_view_matrix[2][2] = camera_look[2];
+
+    m_view_matrix[0][3] = 0;
+    m_view_matrix[1][3] = 0;
+    m_view_matrix[2][3] = 0;
+
+    m_view_matrix[3][0] = -sk::dot(eye, camera_right);
+    m_view_matrix[3][1] = -sk::dot(eye, camera_up);
+    m_view_matrix[3][2] = -sk::dot(eye, camera_look);
+    m_view_matrix[3][3] = 1;
+}
+
+void sk::renderer::set_world_matrix(const matrix4x4f& m)
+{
+    m_world_matrix = m;
+}
+
+void sk::renderer::set_view_matrix(const matrix4x4f& m)
+{
+    m_view_matrix = m;
+}
+
+void sk::renderer::set_projection_matrix(const matrix4x4f& m)
+{
+    m_projection_matrix = m;
+}
+
+void sk::renderer::set_fov(float fov_rads)
+{
+    auto cotan = 1.f / std::tan(fov_rads / 2);
+    m_projection_matrix[0][0] = cotan;
+    m_projection_matrix[1][1] = cotan;
 }
 
 sk::vec3f sk::renderer::transform_vertex(const sk::vec3f& pos)
 {
     sk::vec3f res;
+    sk::matrix1x4f pos_4d;
+    pos_4d[0][0] = pos[0];
+    pos_4d[0][1] = pos[1];
+    pos_4d[0][2] = pos[2];
+    pos_4d[0][3] = 1;
+    auto transformed = mul(pos_4d, mul(mul(m_world_matrix, m_view_matrix), m_projection_matrix));
+    res[0] = transformed[0][0];
+    res[1] = transformed[0][1];
+    res[2] = transformed[0][2];
 
-    res[0] = std::min(1.f, std::max(-1.f, pos[0] / (1 - pos[2] / m_camera_pos[2])));
-    res[1] = std::min(1.f, std::max(-1.f, pos[1] / (1 - pos[2] / m_camera_pos[2])));
-    res[2] = std::min(1.f, std::max(-1.f, pos[2] / (1 - pos[2] / m_camera_pos[2])));
-
-    if (res[0] > 1 || res[1] > 1 || res[2] > 1 ||
-        res[0] < -1 || res[1] < -1 || res[2] < -1)
+    if (std::abs(1 - std::abs(transformed[0][3])) < 1e-5)
     {
-        std::cout << pos << "\n";
-        std::cout << res << "\n";
+        res[0] = -2;
+        res[1] = -2;
+    }
+    else
+    {
+        res[0] /= transformed[0][3];
+        res[1] /= transformed[0][3];
     }
 
+    //res[0] = pos[0] / (1 - pos[2] / 5);
+    //res[1] = pos[1] / (1 - pos[2] / 5);
+
     return res;
+}
+
+void sk::renderer::init_transformation_pipeline()
+{
+    using projection_type = decltype(m_projection_matrix);
+    using view_type = decltype(m_view_matrix);
+    using world_type = decltype(m_world_matrix);
+
+    m_projection_matrix = sk::identity_matrix<projection_type::value_type, projection_type::row_cnt>();
+    m_projection_matrix[3][3] = 0.f;
+    m_projection_matrix[2][3] = 1.f;
+    m_view_matrix = sk::identity_matrix<view_type::value_type, view_type::row_cnt>();
+    m_world_matrix = sk::identity_matrix<world_type::value_type, world_type::row_cnt>();
 }
 
 bool sk::renderer::check_z_buffer(const sk::point& p)
@@ -173,12 +282,6 @@ sk::vec3f sk::renderer::from_ndc(const sk::vec3f& v)
     res[0] = static_cast<int>((v[0] + 1.) * m_image.get_width() / 2. + 0.5f);
     res[1] = static_cast<int>((v[1] + 1.) * m_image.get_height() / 2. + 0.5f);
     res[2] = v[2];
-
-    if (res[0] < 0 || res[1] < 0)
-    {
-        std::cout << v << "\n";
-        std::cout << res << "\n";
-    }
 
     return res;
 }
