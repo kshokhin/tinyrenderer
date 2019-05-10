@@ -34,22 +34,21 @@ void model::read_model(const std::string& filename)
             iss >> trash >> trash;
             sk::vec3f n;
             for (size_t i = 0; i < 3; ++i) iss >> n[i];
-            std::cout << n << "\n";
             n.norm();
-            std::cout << n << "\n";
-            std::cout << "===\n";
             normals.push_back(n);
         }
         else if (!line.compare(0, 2, "f "))
         {
             face f;
-            int itrash, idx, tex_idx;
+            int idx, tex_idx, n_idx;
             iss >> trash;
-            while (iss >> idx >> trash >> tex_idx >> trash >> itrash) {
+            while (iss >> idx >> trash >> tex_idx >> trash >> n_idx) {
                 idx--; // in wavefront obj all indices start at 1, not zero
                 tex_idx--;
+                n_idx--;
                 f.vert_ids.push_back(idx);
                 f.tex_ids.push_back(tex_idx);
+                f.norm_ids.push_back(n_idx);
             }
             faces.push_back(f);
         }
@@ -62,6 +61,11 @@ void model::read_model(const std::string& filename)
         }
     }
     std::cerr << "# v# " << verts.size() << " f# "  << faces.size() << "\n";
+
+    if (normals.empty())
+    {
+        calc_vertex_normals();
+    }
 }
 
 void model::read_texture(const std::string& filename)
@@ -96,7 +100,7 @@ sk::vertex model::get_vertex(const face& f, size_t vertex_id)
         v.tex[0] = tex_verts[f.tex_ids[vertex_id]][0];
         v.tex[1] = tex_verts[f.tex_ids[vertex_id]][1];
     }
-    v.normal = normals[f.vert_ids[vertex_id]];
+    v.normal = normals[f.norm_ids[vertex_id]];
     v.color = get_vertex_color(f, vertex_id);
 
     return v;
@@ -106,4 +110,9 @@ TGAColor model::get_vertex_color(const face& f, size_t vertex_id)
 {
     return texture == nullptr ? TGAColor(255, 255, 255, 255) : 
         texture->get(tex_verts[f.tex_ids[vertex_id]][0], tex_verts[f.tex_ids[vertex_id]][1]);
+}
+
+void model::calc_vertex_normals()
+{
+
 }

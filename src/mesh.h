@@ -10,6 +10,7 @@ struct face
 {
     std::vector<int> vert_ids;
     std::vector<int> tex_ids;
+    std::vector<int> norm_ids;
 };
 
 struct model
@@ -27,4 +28,5 @@ private:
     void read_model(const std::string& /*filename*/);
     void read_texture(const std::string& /*filename*/);
     TGAColor get_vertex_color(const face&, size_t /*vertex_id*/);
+    void calc_vertex_normals();
 };
