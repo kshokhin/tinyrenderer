@@ -15,7 +15,7 @@ const TGAColor blue = TGAColor(0, 0, 255, 255);
 
 int main(int argc, char** argv) {
     TGAImage image(WIDTH, HEIGHT, TGAImage::RGB);
-    model m("african_head.obj", "african_head_diffuse.tga");
+    model m("african_head_no_vn.obj", "african_head_diffuse.tga");
     sk::renderer r(image);
 
     auto camera_pos = sk::vec3f{ 2.f, 2.f, 4.f };

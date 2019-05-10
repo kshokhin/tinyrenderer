@@ -48,6 +48,7 @@ private:
     void init_transformation_pipeline();
     void draw(sk::triangle& t, const sk::vec3f& intensity);
     sk::vec3f triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
+    bool backface_cull(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
     float vertex_intensity(const sk::vertex& v, const sk::vec3f& light_dir);
 private:
     TGAImage& m_image;

@@ -100,25 +100,31 @@ void sk::renderer::draw_filled_triangle(
 sk::vec3f sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
 {
     sk::vec3f intensity{ -1.f, -1.f, -1.f };
+
+    if (backface_cull(v0, v1, v2)) return intensity;
+
     sk::vec3f light_dir(-1, -1, -1);//world space coords
     light_dir.norm();
 
     intensity[0] = vertex_intensity(v0, light_dir);
-    if (intensity[0] < 0) return intensity;
-
     intensity[1] = vertex_intensity(v1, light_dir);
-    if (intensity[1] < 0) return intensity;
-
     intensity[2] = vertex_intensity(v2, light_dir);
 
     return intensity;
 }
 
+bool sk::renderer::backface_cull(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
+{
+    sk::vec3f n = average(v0.normal, v1.normal, v2.normal);
+    n.norm();
+
+    float angle = dot(n, m_view);
+
+    return angle > 0;
+}
+
 float sk::renderer::vertex_intensity(const sk::vertex& v, const sk::vec3f& light_dir)
 {
-    float angle = dot(v.normal, m_view);
-    if (angle > 0) return -1.f;
-
     float intensity = dot(v.normal, light_dir);
     if (intensity > 0) {
         intensity = 0;

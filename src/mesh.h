@@ -29,4 +29,10 @@ private:
     void read_texture(const std::string& /*filename*/);
     TGAColor get_vertex_color(const face&, size_t /*vertex_id*/);
     void calc_vertex_normals();
+    void calc_vertex_normal(size_t v_idx);
+    std::vector<size_t> find_vertex_faces(size_t v_idx);
+    std::vector<sk::vec3f> calc_faces_normals(std::vector<size_t> face_indexes);
+    sk::vec3f calc_face_normal(size_t face_idx);
+    void attach_normal_to_faces(std::vector<size_t> face_indexes, size_t n_idx, size_t v_idx);
+    void attach_normal_to_face(face& f, size_t n_idx, size_t v_idx);
 };
