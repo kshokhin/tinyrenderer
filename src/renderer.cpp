@@ -77,7 +77,7 @@ void sk::renderer::draw_filled_triangle(
     if (v0.pos[1] == v1.pos[1] && v0.pos[1] == v2.pos[1] || v0.pos[0] == v1.pos[0] && v0.pos[0] == v2.pos[0]) return;
 
     auto intensity = triangle_intensity(v0, v1, v2);
-    if (intensity < 0) return;
+    if (intensity[0] < 0 || intensity[1] < 0 || intensity[2] < 0) return;
 
     auto v0_transformed = transform_vertex(v0.pos);
     auto v1_transformed = transform_vertex(v1.pos);
@@ -97,17 +97,35 @@ void sk::renderer::draw_filled_triangle(
 }
 
 //negative intensity means that triangle is not supposed to be rendered
-float sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
+sk::vec3f sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
 {
-    sk::vec3f n = cross((v1.pos - v0.pos), (v2.pos - v0.pos));
+    sk::vec3f intensity{ -1.f, -1.f, -1.f };
+
+    if (backface_cull(v0, v1, v2)) return intensity;
+
     sk::vec3f light_dir(-1, -1, -1);//world space coords
     light_dir.norm();
+
+    intensity[0] = vertex_intensity(v0, light_dir);
+    intensity[1] = vertex_intensity(v1, light_dir);
+    intensity[2] = vertex_intensity(v2, light_dir);
+
+    return intensity;
+}
+
+bool sk::renderer::backface_cull(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
+{
+    sk::vec3f n = average(v0.normal, v1.normal, v2.normal);
     n.norm();
 
     float angle = dot(n, m_view);
-    if (angle > 0) return -1.f;
 
-    float intensity = dot(n, light_dir);
+    return angle > 0;
+}
+
+float sk::renderer::vertex_intensity(const sk::vertex& v, const sk::vec3f& light_dir)
+{
+    float intensity = dot(v.normal, light_dir);
     if (intensity > 0) {
         intensity = 0;
     }
@@ -118,7 +136,7 @@ float sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::vertex& v
     return intensity;
 }
 
-void sk::renderer::draw(sk::triangle& t, float intensity)
+void sk::renderer::draw(sk::triangle& t, const sk::vec3f& intensity)
 {
     sk::bounding_box bb(t, m_image);
 
@@ -130,6 +148,7 @@ void sk::renderer::draw(sk::triangle& t, float intensity)
 
         if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0) continue;
 
+        auto point_intensity = intensity[0]*barycentric[0] + intensity[1]*barycentric[1] + intensity[2]*barycentric[2];
         p.z = t.v0[2] * barycentric[0] + t.v1[2] * barycentric[1] + t.v2[2] * barycentric[2];
 
         if (!check_z_buffer(p)) continue;
@@ -147,7 +166,7 @@ void sk::renderer::draw(sk::triangle& t, float intensity)
 
         m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
 
-        m_image.set(p.x, p.y, TGAColor(c.r*intensity, c.g * intensity, c.b*intensity, c.a));
+        m_image.set(p.x, p.y, TGAColor(c.r*point_intensity, c.g*point_intensity, c.b*point_intensity, c.a));
     }
 }
 

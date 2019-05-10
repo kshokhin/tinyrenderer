@@ -5,6 +5,7 @@
 #include<cstdint>
 #include<cmath>
 #include<vector>
+#include<numeric>
 
 namespace sk
 {
@@ -217,6 +218,22 @@ constexpr vec_impl<T, indexes...> operator-(const vec_impl<T, indexes...>& lhs, 
     ((res[indexes] = (lhs[indexes] - rhs[indexes])), ...);
 
     return res;
+}
+
+template<typename T, size_t ...indexes>
+constexpr vec_impl<T, indexes...> average(const std::vector<vec_impl<T, indexes...>>& vs)
+{
+    auto res = std::accumulate(vs.begin(), vs.end(), vec_impl<T, indexes...>{});
+
+    res = res / vs.size();
+
+    return res;
+}
+
+template<typename TFirst, typename ...TOthers>
+constexpr TFirst average(TFirst first, TOthers&& ...others)
+{
+    return ((first + others) + ...) / (sizeof...(others) + 1);
 }
 
 template<typename T, typename U, size_t ...indexes>

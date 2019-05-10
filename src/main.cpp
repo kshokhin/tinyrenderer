@@ -15,10 +15,14 @@ const TGAColor blue = TGAColor(0, 0, 255, 255);
 
 int main(int argc, char** argv) {
     TGAImage image(WIDTH, HEIGHT, TGAImage::RGB);
-    model m("african_head.obj", "african_head_diffuse.tga");
+    model m("african_head_no_vn.obj", "african_head_diffuse.tga");
     sk::renderer r(image);
 
-    r.look_at(sk::vec3f{ 2.f, 2.f, 4.f }, sk::vec3f{ 0.f, 0.f, 0.f }, sk::vec3f{0.f, -1.f, 0.f});
+    auto camera_pos = sk::vec3f{ 2.f, 2.f, 4.f };
+    auto look_direction = sk::vec3f{ 0.f, 0.f, 0.f };
+    auto camera_up = sk::vec3f{ 0.f, -1.f, 0.f };
+
+    r.look_at(camera_pos, look_direction, camera_up);
     r.set_fov(M_PI/3);
 
     for (auto& face : m.faces) {
