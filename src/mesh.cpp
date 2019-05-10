@@ -29,6 +29,17 @@ void model::read_model(const std::string& filename)
             for (size_t i = 0; i < 3; ++i) iss >> v[i];
             verts.push_back(v);
         }
+        else if (!line.compare(0, 3, "vn "))
+        {
+            iss >> trash >> trash;
+            sk::vec3f n;
+            for (size_t i = 0; i < 3; ++i) iss >> n[i];
+            std::cout << n << "\n";
+            n.norm();
+            std::cout << n << "\n";
+            std::cout << "===\n";
+            normals.push_back(n);
+        }
         else if (!line.compare(0, 2, "f "))
         {
             face f;
@@ -85,6 +96,7 @@ sk::vertex model::get_vertex(const face& f, size_t vertex_id)
         v.tex[0] = tex_verts[f.tex_ids[vertex_id]][0];
         v.tex[1] = tex_verts[f.tex_ids[vertex_id]][1];
     }
+    v.normal = normals[f.vert_ids[vertex_id]];
     v.color = get_vertex_color(f, vertex_id);
 
     return v;

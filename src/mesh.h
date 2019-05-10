@@ -21,6 +21,7 @@ struct model
     std::vector<sk::vec3f> verts;
     std::vector<face> faces;
     std::vector<sk::vec2f> tex_verts;
+    std::vector<sk::vec3f> normals;
     std::unique_ptr<TGAImage> texture = nullptr;
 private:
     void read_model(const std::string& /*filename*/);

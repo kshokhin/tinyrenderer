@@ -18,7 +18,11 @@ int main(int argc, char** argv) {
     model m("african_head.obj", "african_head_diffuse.tga");
     sk::renderer r(image);
 
-    r.look_at(sk::vec3f{ 2.f, 2.f, 4.f }, sk::vec3f{ 0.f, 0.f, 0.f }, sk::vec3f{0.f, -1.f, 0.f});
+    auto camera_pos = sk::vec3f{ 2.f, 2.f, 4.f };
+    auto look_direction = sk::vec3f{ 0.f, 0.f, 0.f };
+    auto camera_up = sk::vec3f{ 0.f, -1.f, 0.f };
+
+    r.look_at(camera_pos, look_direction, camera_up);
     r.set_fov(M_PI/3);
 
     for (auto& face : m.faces) {

@@ -141,6 +141,7 @@ private:
 struct vertex
 {
     vec3f pos;
+    vec3f normal;
     vec2f tex;
     TGAColor color;
 };

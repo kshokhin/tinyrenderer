@@ -46,8 +46,9 @@ private:
     TGAColor get_point_color_from_texture(const sk::vec3f& /*barycentric*/, const sk::vec2f& /*v0_tex_coord*/, const sk::vec2f& /*v1_tex_coord*/, const sk::vec2f& /*v2_tex_coord*/, const TGAImage& texture);
     sk::vec3f transform_vertex(const sk::vec3f&);
     void init_transformation_pipeline();
-    void draw(sk::triangle& t, float intensity);
-    float triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
+    void draw(sk::triangle& t, const sk::vec3f& intensity);
+    sk::vec3f triangle_intensity(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2);
+    float vertex_intensity(const sk::vertex& v, const sk::vec3f& light_dir);
 private:
     TGAImage& m_image;
     std::vector<float> m_z_buffer;
