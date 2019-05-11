@@ -160,9 +160,9 @@ void sk::renderer::draw(sk::triangle& t, const sk::vec3f& intensity)
         uv[0] = t.v0_tex[0] * barycentric[0] + t.v1_tex[0] * barycentric[1] + t.v2_tex[0] * barycentric[2];
         uv[1] = t.v0_tex[1] * barycentric[0] + t.v1_tex[1] * barycentric[1] + t.v2_tex[1] * barycentric[2];
 
-        sk::vec3f light_dir(-1, -1, -1);//world space coords
+        sk::vec3f light_dir(0, 0, -1);//world space coords
         light_dir.norm();
-        m_shader->fragment(uv, light_dir, c);
+        m_shader->fragment(uv, light_dir, m_view, c);
 
         m_image.set(p.x, p.y, c);
 
@@ -187,7 +187,9 @@ void sk::renderer::look_at(const sk::vec3f& eye, const sk::vec3f& center, const 
     auto camera_look = eye - center;
     camera_look.norm();
     m_view = center - eye;
-    auto camera_right = sk::cross(up, camera_look);
+    m_view.norm();
+    std::cout << "view: " << m_view << "\n";
+    auto camera_right = sk::cross(camera_look, up);
     camera_right.norm();
     auto camera_up = sk::cross(camera_look, camera_right);
     camera_up.norm();

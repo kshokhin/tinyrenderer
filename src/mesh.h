@@ -15,7 +15,8 @@ struct face
 
 struct model
 {
-    explicit model(const std::string& /*filename*/, const std::string& /*texture_filename*/, const std::string& /*normal_map_filename*/);
+    explicit model(const std::string& /*filename*/, const std::string& /*texture_filename*/,
+        const std::string& /*normal_map_filename*/, const std::string& /*spec_filename*/);
 
     sk::vertex get_vertex(const face&, size_t /*vertex_id*/);
 
@@ -25,10 +26,10 @@ struct model
     std::vector<sk::vec3f> normals;
     std::unique_ptr<TGAImage> texture = nullptr;
     std::unique_ptr<TGAImage> normal_map = nullptr;
+    std::unique_ptr<TGAImage> specular_map = nullptr;
 private:
     void read_model(const std::string& /*filename*/);
-    void read_texture(const std::string& /*filename*/);
-    void read_normal_map(const std::string& /*filename*/);
+    void read_texture(std::unique_ptr<TGAImage>& tex, const std::string& /*filename*/);
     TGAColor get_vertex_color(const face&, size_t /*vertex_id*/);
     void calc_vertex_normals();
     void calc_vertex_normal(size_t v_idx);

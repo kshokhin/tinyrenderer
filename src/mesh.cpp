@@ -6,11 +6,13 @@
 #include <sstream>
 #include <vector>
 
-model::model(const std::string& filename, const std::string& texture_filename, const std::string& normal_map_filename)
+model::model(const std::string& filename, const std::string& texture_filename,
+    const std::string& normal_map_filename, const std::string& spec_filename)
 {
     read_model(filename);
-    read_texture(texture_filename);
-    read_normal_map(normal_map_filename);
+    read_texture(texture, texture_filename);
+    read_texture(normal_map, normal_map_filename);
+    read_texture(specular_map, spec_filename);
 }
 
 void model::read_model(const std::string& filename)
@@ -69,13 +71,13 @@ void model::read_model(const std::string& filename)
     }
 }
 
-void model::read_texture(const std::string& filename)
+void model::read_texture(std::unique_ptr<TGAImage>& tex, const std::string& filename)
 {
     if (filename.empty()) return;
 
     try
     {
-        texture = std::make_unique<TGAImage>();
+        tex = std::make_unique<TGAImage>();
     }
     catch (std::bad_alloc&)
     {
@@ -83,34 +85,14 @@ void model::read_texture(const std::string& filename)
         return;
     }
 
-    if (!texture->read_tga_file(filename.c_str()))
+    if (!tex->read_tga_file(filename.c_str()))
     {
-        texture.reset();
+        tex.reset();
     }
-
-    texture->flip_vertically();
-}
-
-void model::read_normal_map(const std::string& filename)
-{
-    if (filename.empty()) return;
-
-    try
+    else
     {
-        normal_map = std::make_unique<TGAImage>();
+        tex->flip_vertically();
     }
-    catch (std::bad_alloc&)
-    {
-        std::cerr << "out of memory\n";
-        return;
-    }
-
-    if (!normal_map->read_tga_file(filename.c_str()))
-    {
-        normal_map.reset();
-    }
-
-    normal_map->flip_vertically();
 }
 
 sk::vertex model::get_vertex(const face& f, size_t vertex_id)
