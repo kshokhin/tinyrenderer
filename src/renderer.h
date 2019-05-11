@@ -10,6 +10,8 @@ struct model;
 namespace sk
 {
 
+class shader_base;
+
 template<typename T, size_t ...indexes>
 class vec_impl;
 
@@ -37,6 +39,10 @@ public:
     void set_view_matrix(const matrix4x4f& m);
     void set_projection_matrix(const matrix4x4f& m);
     void set_fov(float fov_rads);
+    void set_shader(shader_base* s) { m_shader = s; }
+    const sk::matrix4x4f& view_matrix() { return m_view_matrix; }
+    const sk::matrix4x4f& world_matrix() { return m_world_matrix; };
+    const sk::matrix4x4f& projection_matrix() { return m_projection_matrix; };
 private:
     sk::point get_next_line_point(const sk::line&, const point& /*prev_point*/, int& /*err*/);
     sk::vec3f from_ndc(const sk::vec3f& /*v*/);
@@ -57,6 +63,7 @@ private:
     sk::matrix4x4f m_world_matrix;
     sk::matrix4x4f m_view_matrix;
     sk::matrix4x4f m_projection_matrix;
+    sk::shader_base *m_shader = nullptr;
 };
 
 }

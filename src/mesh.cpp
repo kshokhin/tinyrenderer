@@ -6,10 +6,11 @@
 #include <sstream>
 #include <vector>
 
-model::model(const std::string& filename, const std::string& texture_filename)
+model::model(const std::string& filename, const std::string& texture_filename, const std::string& normal_map_filename)
 {
     read_model(filename);
     read_texture(texture_filename);
+    read_normal_map(normal_map_filename);
 }
 
 void model::read_model(const std::string& filename)
@@ -88,6 +89,28 @@ void model::read_texture(const std::string& filename)
     }
 
     texture->flip_vertically();
+}
+
+void model::read_normal_map(const std::string& filename)
+{
+    if (filename.empty()) return;
+
+    try
+    {
+        normal_map = std::make_unique<TGAImage>();
+    }
+    catch (std::bad_alloc&)
+    {
+        std::cerr << "out of memory\n";
+        return;
+    }
+
+    if (!normal_map->read_tga_file(filename.c_str()))
+    {
+        normal_map.reset();
+    }
+
+    normal_map->flip_vertically();
 }
 
 sk::vertex model::get_vertex(const face& f, size_t vertex_id)

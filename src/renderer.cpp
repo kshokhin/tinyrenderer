@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "mesh.h"
+#include "shader.h"
 
 #include <utility>
 #include <limits>
@@ -103,7 +104,7 @@ sk::vec3f sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::verte
 
     if (backface_cull(v0, v1, v2)) return intensity;
 
-    sk::vec3f light_dir(-1, -1, -1);//world space coords
+    sk::vec3f light_dir(-1, 0, 0);//world space coords
     light_dir.norm();
 
     intensity[0] = vertex_intensity(v0, light_dir);
@@ -115,7 +116,7 @@ sk::vec3f sk::renderer::triangle_intensity(const sk::vertex& v0, const sk::verte
 
 bool sk::renderer::backface_cull(const sk::vertex& v0, const sk::vertex& v1, const sk::vertex& v2)
 {
-    sk::vec3f n = average(v0.normal, v1.normal, v2.normal);
+    sk::vec3f n = cross((v1.pos - v0.pos), (v2.pos - v0.pos));
     n.norm();
 
     float angle = dot(n, m_view);
@@ -148,12 +149,24 @@ void sk::renderer::draw(sk::triangle& t, const sk::vec3f& intensity)
 
         if (barycentric[0] < 0 || barycentric[1] < 0 || barycentric[2] < 0) continue;
 
-        auto point_intensity = intensity[0]*barycentric[0] + intensity[1]*barycentric[1] + intensity[2]*barycentric[2];
         p.z = t.v0[2] * barycentric[0] + t.v1[2] * barycentric[1] + t.v2[2] * barycentric[2];
 
         if (!check_z_buffer(p)) continue;
 
+        m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
+
         TGAColor c;
+        sk::vec2f uv;
+        uv[0] = t.v0_tex[0] * barycentric[0] + t.v1_tex[0] * barycentric[1] + t.v2_tex[0] * barycentric[2];
+        uv[1] = t.v0_tex[1] * barycentric[0] + t.v1_tex[1] * barycentric[1] + t.v2_tex[1] * barycentric[2];
+
+        sk::vec3f light_dir(-1, -1, -1);//world space coords
+        light_dir.norm();
+        m_shader->fragment(uv, light_dir, c);
+
+        m_image.set(p.x, p.y, c);
+
+        /*TGAColor c;
 
         if (t.texture == nullptr)
         {
@@ -164,9 +177,8 @@ void sk::renderer::draw(sk::triangle& t, const sk::vec3f& intensity)
             c = get_point_color_from_texture(barycentric, t.v0_tex, t.v1_tex, t.v2_tex, *t.texture);
         }
 
-        m_z_buffer[p.y*m_image.get_width() + p.x] = p.z;
-
-        m_image.set(p.x, p.y, TGAColor(c.r*point_intensity, c.g*point_intensity, c.b*point_intensity, c.a));
+        auto point_intensity = intensity[0] * barycentric[0] + intensity[1] * barycentric[1] + intensity[2] * barycentric[2];
+        m_image.set(p.x, p.y, TGAColor(c.r*point_intensity, c.g*point_intensity, c.b*point_intensity, c.a));*/
     }
 }
 
@@ -175,7 +187,6 @@ void sk::renderer::look_at(const sk::vec3f& eye, const sk::vec3f& center, const 
     auto camera_look = eye - center;
     camera_look.norm();
     m_view = center - eye;
-    std::cout << m_view << "\n";
     auto camera_right = sk::cross(up, camera_look);
     camera_right.norm();
     auto camera_up = sk::cross(camera_look, camera_right);
@@ -228,29 +239,22 @@ void sk::renderer::set_fov(float fov_rads)
 sk::vec3f sk::renderer::transform_vertex(const sk::vec3f& pos)
 {
     sk::vec3f res;
-    sk::matrix1x4f pos_4d;
-    pos_4d[0][0] = pos[0];
-    pos_4d[0][1] = pos[1];
-    pos_4d[0][2] = pos[2];
-    pos_4d[0][3] = 1;
-    auto transformed = mul(pos_4d, mul(mul(m_world_matrix, m_view_matrix), m_projection_matrix));
-    res[0] = transformed[0][0];
-    res[1] = transformed[0][1];
-    res[2] = transformed[0][2];
+    auto transformed = m_shader->vertex(pos);
 
-    if (std::abs(1 - std::abs(transformed[0][3])) < 1e-5)
+    res[0] = transformed[0];
+    res[1] = transformed[1];
+    res[2] = transformed[2];
+
+    if (std::abs(transformed[3]) < 1e-5)
     {
         res[0] = -2;
         res[1] = -2;
     }
     else
     {
-        res[0] /= transformed[0][3];
-        res[1] /= transformed[0][3];
+        res[0] /= transformed[3];
+        res[1] /= transformed[3];
     }
-
-    //res[0] = pos[0] / (1 - pos[2] / 5);
-    //res[1] = pos[1] / (1 - pos[2] / 5);
 
     return res;
 }
@@ -290,7 +294,7 @@ TGAColor sk::renderer::get_point_color_from_texture(const sk::vec3f& barycentric
     auto v = v0_tex_coord[1] * barycentric[0] + v1_tex_coord[1] * barycentric[1] + v2_tex_coord[1] * barycentric[2];
 
     auto u_image = static_cast<int>(u * texture.get_width() + 0.5);
-    auto v_image = static_cast<int>(v * texture.get_width() + 0.5);
+    auto v_image = static_cast<int>(v * texture.get_height() + 0.5);
 
     return texture.get(u_image, v_image);
 }

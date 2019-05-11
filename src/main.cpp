@@ -1,6 +1,7 @@
 #include "tgalib/tgaimage.h"
 #include "renderer.h"
 #include "mesh.h"
+#include "shader.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -15,15 +16,31 @@ const TGAColor blue = TGAColor(0, 0, 255, 255);
 
 int main(int argc, char** argv) {
     TGAImage image(WIDTH, HEIGHT, TGAImage::RGB);
-    model m("african_head.obj", "african_head_diffuse.tga");
+    //model m("african_head.obj", "african_head_diffuse.tga", "african_head_nm.tga");
+    model m("diablo3_pose.obj", "diablo3_pose_diffuse.tga", "diablo3_pose_nm.tga");
     sk::renderer r(image);
 
-    auto camera_pos = sk::vec3f{ 2.f, 2.f, 4.f };
+    auto camera_pos = sk::vec3f{ 1.5f, 1.f, 3.f };
     auto look_direction = sk::vec3f{ 0.f, 0.f, 0.f };
     auto camera_up = sk::vec3f{ 0.f, -1.f, 0.f };
 
     r.look_at(camera_pos, look_direction, camera_up);
     r.set_fov(M_PI/3);
+
+    auto& world = r.world_matrix();
+    auto& view = r.view_matrix();
+    auto& proj = r.projection_matrix();
+
+    std::cout << proj << '\n';
+
+    auto transform = sk::mul(sk::mul(world, view), proj);
+
+    sk::shader s;
+    s.set_transform_matrix(transform);
+    s.set_texture(m.texture.get());
+    s.set_normal_map(m.normal_map.get());
+
+    r.set_shader(&s);
 
     for (auto& face : m.faces) {
         sk::vertex v0, v1, v2;

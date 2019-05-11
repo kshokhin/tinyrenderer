@@ -106,6 +106,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\renderer.cpp" />
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\tgalib\tgaimage.cpp" />
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
@@ -113,6 +114,7 @@
     <ClInclude Include="src\geometry.h" />
     <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\renderer.h" />
+    <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\tgalib\tgaimage.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>

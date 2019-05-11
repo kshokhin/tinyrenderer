@@ -71,6 +71,7 @@ public:
 
     void set_row(const std::vector<T>& /*r*/, size_t /*row_idx*/);
     void set_matrix_column(const std::vector<T>& /*c*/, size_t /*col_idx*/);
+    matrix<T, M, N> transpose();
 private:
     std::array<T, N*M> m_data;
 };
@@ -96,6 +97,22 @@ void matrix<T, N, M>::set_matrix_column(const std::vector<T>& c, size_t col_idx)
     {
         m_data[i*M + col_idx] = c[i];
     }
+}
+
+template<typename T, size_t N, size_t M>
+matrix<T, M, N> matrix<T, N, M>::transpose()
+{
+    matrix<T, M, N> res;
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        for (size_t j = 0; j < M; ++j)
+        {
+            res.m_data[j*N + i] = m_data[i*M + j];
+        }
+    }
+
+    return res;
 }
 
 using matrix4x4f = matrix<float, 4, 4>;
@@ -284,4 +301,5 @@ std::ostream& operator<<(std::ostream& out, const vec_impl<T, indexes...>& v)
 using vec3f = vec_impl<float, 0, 1, 2>;
 using vec2f = vec_impl<float, 0, 1>;
 using vec3i = vec_impl<int, 0, 1, 2>;
+using vec4f = vec_impl<float, 0, 1, 2, 3>;
 }
